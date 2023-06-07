@@ -83,6 +83,6 @@ data_list = df.to_dict('records')
 # 将数据列表转换为JSON字符串
 json_data = json.dumps(data_list, ensure_ascii=False, indent=4)
 # 将JSON数据写入txt文件
-with open('processed_data.txt', 'w', encoding='utf-8') as file:
+with open('processed_usual_data.txt', 'w', encoding='utf-8') as file:
     file.write(json_data)
 
