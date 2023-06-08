@@ -2,42 +2,38 @@ from wordcloud import WordCloud
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# 假设处理后的数据已经存储在名为'processed_data.txt'的文件中
-data = pd.read_json('processed_data.txt')
-
-# 合并所有文本内容为一个字符串，用于构建总的词云图
-all_content = ' '.join(data['content'].tolist())
-
 font_path="C:\\Windows\\Fonts\\STFANGSO.ttf"
 
-# 创建总的词云图对象
-all_wordcloud = WordCloud(font_path=font_path,background_color='white').generate(all_content)
+
+# 读取新的CSV文件
+df = pd.read_csv('processed_4mood_data.csv')
+# df_sampled = df.sample(frac=0.2, random_state=42)
+# df=df_sampled
+
+# 合并所有review文本
+all_reviews = ' '.join(df['review'].sum())
+
+# 生成总的词云图
+wordcloud = WordCloud(width=800, height=400,font_path=font_path, background_color='white').generate(all_reviews)
+
 
 # 绘制总的词云图
-plt.figure()
-plt.imshow(all_wordcloud, interpolation='bilinear')
+plt.figure(figsize=(10, 5))
+plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
-plt.title('Total Word Cloud')
-
-# 显示总的词云图
+plt.title('total')
 plt.show()
 
-# 根据标签分组
-grouped = data.groupby('tag')
+# 按tag分组，合并每个tag的review文本
+grouped_reviews = df.groupby('label')['review'].sum()
 
-# 构建每个标签的词云图
-for tag, group in grouped:
-    # 提取对应标签组的内容并合并为一个字符串
-    content = ' '.join(group['content'].tolist())
+# 生成每个tag的词云图
+for label, reviews in grouped_reviews.items():
+    tag_wordcloud = WordCloud(width=800, height=400,font_path=font_path, background_color='white').generate(' '.join(reviews))
 
-    # 创建词云对象
-    wordcloud = WordCloud(font_path=font_path,background_color='white').generate(content)
-
-    # 绘制词云图
-    plt.figure()
-    plt.imshow(wordcloud, interpolation='bilinear')
+    # 绘制每个tag的词云图
+    plt.figure(figsize=(10, 5))
+    plt.imshow(tag_wordcloud, interpolation='bilinear')
     plt.axis('off')
-    plt.title('Tag: {}'.format(tag))
-
-# 显示所有词云图
-plt.show()
+    plt.title(f'{label}')
+    plt.show()

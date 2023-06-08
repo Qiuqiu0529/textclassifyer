@@ -4,7 +4,9 @@ import re
 import opencc
 import jieba
 import matplotlib.pyplot as plt
-
+import csv
+import random
+import time
 
 converter = opencc.OpenCC('t2s.json')  # 't2s.json' 表示从繁体转换为简体，'s2t.json' 表示从简体转换为繁体
 
@@ -26,63 +28,75 @@ def preprocess_text(text):
 
 
 
-# 读取文件
-with open('dataset/train/usual_train.txt', 'r', encoding='utf-8') as file:
-    data = json.load(file)
+filename = 'simplifyweibo_4_moods.csv'  # CSV文件名
+data = pd.read_csv(filename)
+data_filtered = pd.DataFrame()
+for label in data['label'].unique():
+    # 获取当前类别的数据
+    subset_df = data[data['label'] == label].head(30000)
+    # 将当前类别的数据添加到过滤后的DataFrame
+    data_filtered = pd.concat([data_filtered, subset_df])
 
-print(len(data))
-df = pd.DataFrame(columns=('content', 'tag'))
-label_mapping = {'happy': 0, 'sad': 1, 'angry': 2, 'fear': 3, 'surprise': 4, 'neutral': 5}
+print(len(data_filtered))
+label_categories = data_filtered['label'].unique()
+print(label_categories)
 
-# 遍历数据
-for item in data:
-    content = item['content']
-    # 正则匹配
-    processed_content = preprocess_text(content)
-    label = item['label']
-    print("Content:", processed_content)
-    print("Label:", label)
-    df = pd.concat([df, pd.DataFrame({'content': [processed_content], 'tag': [label]})], ignore_index=True)
+start_time = time.time()
 
-# 去除重复的content
-df = df.drop_duplicates(subset=['content'])
-# 去除空的content
-df = df.dropna(subset=['content'])
+data_filtered['review'] = data_filtered['review'].apply(preprocess_text)
+sample_df = data_filtered.sample(n=50)
+
+# 将DataFrame转换为字符串并打印
+print(sample_df.to_string(index=False))
+
+end_time = time.time()
+execution_time = end_time - start_time
+# 打印执行时间
+print(f"遍历函数执行时间：{execution_time}秒")
+
+
+df= data_filtered
+# 去除空数据
+df.dropna(inplace=True)
+# 去除重复数据
+df.drop_duplicates(inplace=True)
+# 去除review长度小于15的数据
+df = df[df['review'].str.len() >= 15]
 # 重置索引
-df = df.reset_index(drop=True)
-print(len(df))
-df = df[df['content'].apply(lambda x: len(x) >= 15)]
+df.reset_index(drop=True, inplace=True)
 print(len(df))
 
-label_counts = df['tag'].value_counts()
+label_counts = df['label'].value_counts()
 print(label_counts)
 
 plt.bar(label_counts.index, label_counts.values)
 # 添加标题和标签
-plt.title('Tag Counts')
-plt.xlabel('Tag')
+plt.title('Label Counts')
+plt.xlabel('Label')
 plt.ylabel('Count')
 plt.show()
-
-
-df['tag'] = df['tag'].map(label_mapping)
-label_counts = df['tag'].value_counts()
-print(label_counts)
-
 
 
 stopwords = []
 with open('stopword.txt', 'r', encoding='utf-8') as file:
     stopwords = [line.strip() for line in file.readlines()]
 
-# 对content列的每个元素进行分词并去除停用词
-df['content'] = df['content'].apply(lambda x: " ".join([word for word in jieba.cut(x) if word not in stopwords]))
+# 分词函数
+def tokenize(text):
+    words = jieba.lcut(text)
+    words = [word for word in words if word not in stopwords]
+    return words
+
+# 每个元素进行分词并去除停用词
+df['review'] = df['review'].apply(tokenize)
 df.sample(10)
 
-data_list = df.to_dict('records')
-# 将数据列表转换为JSON字符串
-json_data = json.dumps(data_list, ensure_ascii=False, indent=4)
-# 将JSON数据写入txt文件
-with open('processed_usual_data.txt', 'w', encoding='utf-8') as file:
-    file.write(json_data)
+# 存储为新的CSV文件
+df.to_csv('processed_4mood_data.csv', index=False)
 
+# data_list = df.to_dict('records')
+# # 将数据列表转换为JSON字符串
+# json_data = json.dumps(data_list, ensure_ascii=False, indent=4)
+# # 将JSON数据写入txt文件
+# with open('processed_4mood_data.txt', 'w', encoding='utf-8') as file:
+#     file.write(json_data)

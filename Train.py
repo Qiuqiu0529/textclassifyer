@@ -1,6 +1,7 @@
 import json
 import numpy as np
 import sklearn
+import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -21,26 +22,36 @@ from sklearn.naive_bayes import MultinomialNB
 from sklearn import svm
 
 
+# with open('processed_usual_data.txt', 'r', encoding='utf-8') as file:
+#     train_data = json.load(file)
+#
+# with open('processed_usual_test_data.txt', 'r', encoding='utf-8') as file:
+#     test_data = json.load(file)
+#
+# train_texts, train_tags = [], []
+# test_texts, test_tags = [], []
+#
+# for data in train_data:
+#     train_texts.append(data['content'])
+#     train_tags.append(data['tag'])
+#
+# for data in test_data:
+#     test_texts.append(data['content'])
+#     test_tags.append(data['tag'])
 
-with open('processed_usual_data.txt', 'r', encoding='utf-8') as file:
-    train_data = json.load(file)
+# # 划分训练集和测试集
+# X_train, X_test, y_train, y_test = train_test_split(train_texts, train_tags, test_size=0.2, random_state=42)
 
-with open('processed_usual_test_data.txt', 'r', encoding='utf-8') as file:
-    test_data = json.load(file)
 
-train_texts, train_tags = [], []
-test_texts, test_tags = [], []
+df = pd.read_csv('processed_4mood_data.csv')
 
-for data in train_data:
-    train_texts.append(data['content'])
-    train_tags.append(data['tag'])
-
-for data in test_data:
-    test_texts.append(data['content'])
-    test_tags.append(data['tag'])
+# 提取特征列和标签列
+features = df['review']  # 假设特征列为 'content'
+labels = df['label']  # 假设标签列为 'tag'
 
 # 划分训练集和测试集
-X_train, X_test, y_train, y_test = train_test_split(train_texts, train_tags, test_size=0.2, random_state=42)
+X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.1, random_state=42)
+
 
 # 输出训练集和测试集的样本数量
 print("训练集样本数量:", len(X_train))
@@ -109,6 +120,8 @@ def softmax():
 
     draw_accuracy_comparison(accuracy_tf, accuracy_bag)
 
+
+softmax()
 
 def KNN():
     # KNN
